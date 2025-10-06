@@ -1,0 +1,52 @@
+{
+  "name": "chat-platform",
+  "version": "1.0.0",
+  "description": "Multi-functional multi-threaded online chat platform",
+  "main": "index.js",
+  "scripts": {
+    "setup": "./setup.sh",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "start": "npm run start:backend",
+    "start:backend": "cd backend && npm start",
+    "db:setup": "cd backend && npx prisma generate && npx prisma db push",
+    "db:studio": "cd backend && npx prisma studio",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "docker:logs": "docker-compose logs -f",
+    "clean": "rm -rf backend/node_modules frontend/node_modules backend/dist frontend/dist",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "chat",
+    "real-time",
+    "socket.io",
+    "typescript",
+    "react",
+    "postgresql",
+    "collaboration",
+    "multi-threaded"
+  ],
+  "author": "Chat Platform Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/chat-platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/chat-platform/issues"
+  },
+  "homepage": "https://github.com/your-username/chat-platform#readme"
+}

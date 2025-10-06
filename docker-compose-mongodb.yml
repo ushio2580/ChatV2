@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: chat-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: chat_platform
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - chat-network
+
+  backend:
+    build: ./backend
+    container_name: chat-backend
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/chat_platform?authSource=admin
+      NODE_ENV: development
+    depends_on:
+      - mongodb
+    networks:
+      - chat-network
+
+  frontend:
+    build: ./frontend
+    container_name: chat-frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - chat-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  chat-network:
+    driver: bridge

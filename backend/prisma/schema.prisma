@@ -1,0 +1,225 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// User Model
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  firstName String?
+  lastName  String?
+  avatar    String?
+  role      String   @default("USER")
+  isOnline  Boolean  @default(false)
+  lastSeen  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sentMessages     Message[]     @relation("MessageSender")
+  receivedMessages Message[]     @relation("MessageReceiver")
+  groupMemberships GroupMember[]
+  ownedGroups      Group[]       @relation("GroupOwner")
+  adminGroups      Group[]       @relation("GroupAdmin")
+  fileUploads      File[]
+  documentEdits    DocumentEdit[]
+  reactions        MessageReaction[]
+  notifications    Notification[]
+
+  @@map("users")
+}
+
+// User Roles (using strings for SQLite compatibility)
+// USER, ADMIN, GROUP_OWNER
+
+// Group/Room Model
+model Group {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  type        String      @default("PRIVATE")
+  avatar      String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  ownerId   String
+  owner     User         @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  adminId   String?
+  admin     User?        @relation("GroupAdmin", fields: [adminId], references: [id], onDelete: SetNull)
+  members   GroupMember[]
+  messages  Message[]
+  files     File[]
+  documents Document[]
+
+  // Group Settings
+  settings GroupSettings?
+
+  @@map("groups")
+}
+
+// Group Types (using strings for SQLite compatibility)
+// PRIVATE, PUBLIC, DIRECT_MESSAGE
+
+// Group Member Model
+model GroupMember {
+  id        String           @id @default(cuid())
+  userId    String
+  groupId   String
+  role      String           @default("MEMBER")
+  joinedAt  DateTime         @default(now())
+  isMuted   Boolean          @default(false)
+  isBanned  Boolean          @default(false)
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@map("group_members")
+}
+
+// Group Member Roles (using strings for SQLite compatibility)
+// MEMBER, MODERATOR, ADMIN
+
+// Group Settings
+model GroupSettings {
+  id                String  @id @default(cuid())
+  groupId           String  @unique
+  maxMembers        Int     @default(100)
+  allowFileUpload   Boolean @default(true)
+  allowAnonymous    Boolean @default(false)
+  requireApproval   Boolean @default(false)
+  allowMemberInvite Boolean @default(true)
+
+  // Relations
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@map("group_settings")
+}
+
+// Message Model
+model Message {
+  id        String      @id @default(cuid())
+  content   String
+  type      String      @default("TEXT")
+  timestamp DateTime    @default(now())
+  editedAt  DateTime?
+  isDeleted Boolean     @default(false)
+
+  // Relations
+  senderId   String
+  receiverId String?
+  groupId    String?
+  sender     User    @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User?   @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: SetNull)
+  group      Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  attachments File[]
+  reactions  MessageReaction[]
+
+  @@map("messages")
+}
+
+// Message Types (using strings for SQLite compatibility)
+// TEXT, FILE, IMAGE, SYSTEM, DOCUMENT_EDIT
+
+// File Model
+model File {
+  id          String   @id @default(cuid())
+  filename    String
+  originalName String
+  mimeType    String
+  size        Int
+  path        String
+  uploadedAt  DateTime @default(now())
+  isPublic    Boolean  @default(false)
+
+  // Relations
+  uploadedBy String?
+  messageId  String?
+  groupId    String?
+  uploader   User?   @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
+  message    Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  group      Group?   @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  @@map("files")
+}
+
+// Document Model (for collaborative editing)
+model Document {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @default("")
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  groupId String
+  group   Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  edits   DocumentEdit[]
+
+  @@map("documents")
+}
+
+// Document Edit Model (for version control)
+model DocumentEdit {
+  id         String   @id @default(cuid())
+  content    String
+  version    Int
+  editedAt   DateTime @default(now())
+  changeType String   // 'insert', 'delete', 'replace'
+
+  // Relations
+  documentId String
+  userId     String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("document_edits")
+}
+
+// Message Reaction Model
+model MessageReaction {
+  id        String @id @default(cuid())
+  emoji     String
+  createdAt DateTime @default(now())
+
+  // Relations
+  messageId String
+  userId    String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@map("message_reactions")
+}
+
+// Notification Model
+model Notification {
+  id        String           @id @default(cuid())
+  title     String
+  content   String
+  type      String           @default("INFO")
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// Notification Types (using strings for SQLite compatibility)
+// INFO, WARNING, ERROR, SUCCESS, MESSAGE, GROUP_INVITE, FILE_SHARED

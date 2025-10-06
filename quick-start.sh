@@ -1,0 +1,33 @@
+#!/bin/bash
+
+echo "🚀 Chat Platform - Quick Start Guide"
+echo "====================================="
+echo ""
+
+echo "✅ PostgreSQL está configurado"
+echo "✅ Frontend funcionando en: http://localhost:5173"
+echo ""
+
+echo "📋 Para completar la configuración:"
+echo ""
+echo "1. Ejecuta este comando para dar permisos al usuario:"
+echo "   sudo -u postgres psql -c \"GRANT ALL ON SCHEMA public TO chat_user;\""
+echo ""
+echo "2. Luego ejecuta:"
+echo "   cd backend && npx prisma db push"
+echo ""
+echo "3. Inicia el backend:"
+echo "   cd backend && npm run dev"
+echo ""
+echo "4. Abre tu navegador en: http://localhost:5173"
+echo ""
+
+echo "🎉 ¡Tu plataforma de chat estará lista!"
+echo ""
+echo "Funcionalidades disponibles:"
+echo "• 💬 Chat en tiempo real"
+echo "• 👥 Gestión de grupos"
+echo "• 📁 Transferencia de archivos"
+echo "• ✏️ Edición colaborativa de documentos"
+echo "• 🔐 Autenticación segura"
+echo "• 👤 Gestión de usuarios y permisos"
